@@ -1,0 +1,33 @@
+#!/bin/bash
+
+COMMAND=zenity
+TITLE=SimpleVPNChooser
+TEXT=""
+COLUMN="Availables VPN:"
+EXTRA_BUTTON=""
+ACTIVE_VPN=$(nmcli con show --active | grep vpn | cut -f 1 -d " ")
+
+if [[ $ACTIVE_VPN != "" ]]; then
+    EXTRA_BUTTON='--extra-button=StopVPN'
+    COLUMN="Active VPN: $ACTIVE_VPN"
+    $COMMAND --notification --text="Active VPN: $ACTIVE_VPN"
+fi
+
+
+RETVAL=$($COMMAND --title=$TITLE --text="$TEXT" $EXTRA_BUTTON --height=400 --width=300  --list --column="$COLUMN" $(nmcli con show | grep vpn | cut -f 1 -d " "))
+
+if [[ $RETVAL == "StopVPN" ]] ; then
+    DOWN=$(nmcli con down $ACTIVE_VPN)
+    exit 1
+elif [[ $RETVAL == "" ]]; then
+    exit 2
+else
+    if [[ $ACTIVE_VPN != "" ]]; then
+        DOWN=$(nmcli con down $ACTIVE_VPN)
+    fi
+    UP=$(nmcli con up $RETVAL)
+    exit 0
+fi
+
+
+
